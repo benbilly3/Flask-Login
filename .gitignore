@@ -1,0 +1,12 @@
+.DS_Store
+.Python
+*.pyc
+log/
+__pycache__/
+.vscode/
+.idea/
+migrations
+build.log
+db/mysql/*
+db/redis/*
+test.py

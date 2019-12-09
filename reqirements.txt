@@ -1,0 +1,11 @@
+flask
+flask_login
+flask_sqlalchemy
+flask_migrate
+werkzeug
+flask_wtf
+wtforms
+flask-Dance
+PyMySQL
+SQLAlchemy
+Jinja2
