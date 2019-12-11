@@ -10,3 +10,4 @@ build.log
 db/mysql/*
 db/redis/*
 test.py
+venv/
