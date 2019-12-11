@@ -48,18 +48,17 @@ def login():
                 next = url_for('welcome_user')
 
             return redirect(next)
+
     return render_template('login.html', form=form)
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
-
     if form.validate_on_submit():
         user = User(email=form.email.data,
                     username=form.username.data,
                     password=form.password.data)
-
         db.session.add(user)
         db.session.commit()
         flash('Thanks for registering! Now you can login!')
@@ -71,7 +70,6 @@ def register():
 google_Oauth = make_google_blueprint(
     client_id=google_client_id,
     client_secret=google_client_secret,
-    # reprompt_consent=True,
     offline=True,
     scope=["profile", "email"],
     redirect_url='/welcome_google'
@@ -121,8 +119,8 @@ fb_Oauth = make_facebook_blueprint(
     client_secret=fb_client_secret,
     # reprompt_consent=True,
     # offline=True,
-    # scope=["profile", "email"],
-    # redirect_url='/welcome_fb'
+    scope=["email"],
+    redirect_url='/welcome_fb'
 )
 
 
@@ -131,6 +129,38 @@ app.register_blueprint(fb_Oauth, url_prefix="/login")
 def fb_login():
     if not facebook.authorized:
         return redirect(url_for("facebook.login"))
+
+@app.route('/welcome_fb')
+def welcome_fb():
+    resp = facebook.get("/me")
+    assert resp.ok, resp.text
+    email=resp.json()["email"]
+    # check gmail in db,if not in db,create user data
+    user = User.query.filter_by(email=email).first()
+    if user is None:
+        user = User(
+            email=email,
+            username=email,
+            password='123456'
+        )
+
+        db.session.add(user)
+        db.session.commit()
+        user = User.query.filter_by(email=email).first()
+
+    # and log in
+    login_user(user)
+
+    # If a user was trying to visit a page that requires a login
+    # flask saves that URL as 'next'.
+    next = request.args.get('next')
+
+    # So let's now check if that next exists, otherwise we'll go to
+    # the welcome page.
+    if next == None or not next[0] == '/':
+        next = url_for('welcome_user')
+        return redirect(next)
+
 
 #####logout#####
 @app.route('/logout')

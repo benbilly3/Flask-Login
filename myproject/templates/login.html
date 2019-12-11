@@ -1,50 +1,171 @@
-{% extends "base.html" %}
-{% block content %}
-<form method="POST">
-    {# This hidden_tag is a CSRF security feature. #}
-    {{ form.hidden_tag() }}
-    {{ form.email.label }} {{ form.email() }}
-    {{ form.password.label }} {{ form.password() }}
-    {{ form.submit() }}
-</form>
-<div><a href="{{url_for('google_login')}}">google_login</a></div>
-<div><a href="{{url_for('fb_login')}}">fb_login</a></div>
-<fb:login-button
-  scope="public_profile,email"
-  onlogin="checkLoginState();">
-</fb:login-button>
-{% endblock %}
 
-{% block scripts %}
-<script>
-  window.fbAsyncInit = function() {
-    FB.init({
-      appId      : '533132573918405',
-      cookie     : true,
-      xfbml      : true,
-      version    : 'v5.0'
-    });
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <meta charset="utf-8">
+    <title></title>
+</head>
+<body>
+  <ul class="nav">
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+      </li>
+      {% if current_user.is_authenticated %}
+      <li class="nav-link"><a href="{{ url_for('logout') }}">Log Out</a></li>
+      {% else %}
+      <li class="nav-link"><a href="{{ url_for('login') }}">Log In</a></li>
+      <li class="nav-link"><a href="{{ url_for('register') }}">Register</a></li>
+      {% endif %}
+   </ul>
+    <form method="POST">
+        {# This hidden_tag is a CSRF security feature. #}
+        {{ form.hidden_tag() }}
+        {{ form.email.label }} {{ form.email() }}
+        {{ form.password.label }} {{ form.password() }}
+        {{ form.submit() }}
+    </form>
 
-    FB.AppEvents.logPageView();
+    <div><a href="{{url_for('google_login')}}">google_login</a></div>
+    <div><a href="{{url_for('fb_login')}}">fb_login</a></div>
+    <div>
+        Facebook_login：<input type="button" value="Facebook_login" onclick="FBLogin();" />
+    </div>
+    <div>
+        <!--留意用戶的此頁，你的App會被移除：https://www.facebook.com/settings?tab=applications-->
+        Facebook_logout：<input type="button" value="Facebook_logout" onclick="Del_FB_App()" />
+    </div>
+    <!--顯示用戶的姓名、email↓-->
+    <div id="content"></div>
+    <script type="text/javascript">
+        //應用程式編號，進入 https://developers.facebook.com/apps/ 即可看到
+        let FB_appID = "533132573918405";
 
-  };
 
-  (function(d, s, id){
-     var js, fjs = d.getElementsByTagName(s)[0];
-     if (d.getElementById(id)) {return;}
-     js = d.createElement(s); js.id = id;
-     js.src = "https://connect.facebook.net/en_US/sdk.js";
-     fjs.parentNode.insertBefore(js, fjs);
-   }(document, 'script', 'facebook-jssdk'));
 
-   FB.getLoginStatus(function(response) {
-    statusChangeCallback(response);
-});
+        // Load the Facebook Javascript SDK asynchronously
+        (function (d, s, id) {
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) return;
+            js = d.createElement(s); js.id = id;
+            js.src = "https://connect.facebook.net/en_US/sdk.js";
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
 
-function checkLoginState() {
-  FB.getLoginStatus(function(response) {
-    statusChangeCallback(response);
-  });
-}
-</script>
-{% endblock %}
+        window.fbAsyncInit = function () {
+            FB.init({
+                appId: FB_appID,//FB appID
+                cookie: true,  // enable cookies to allow the server to access the session
+                xfbml: true,  // parse social plugins on this page
+                version: 'v4.0' // use graph api version
+            });
+            FB.AppEvents.logPageView();
+
+        };
+
+        //使用自己客製化的按鈕來登入
+        function FBLogin() {
+            FB.getLoginStatus(function (res) {
+                console.log(`status:${res.status}`);//Debug
+
+                if (res.status === "connected") {
+                    let userID = res["authResponse"]["userID"];
+                    console.log("用戶已授權您的App，用戶須先revoke撤除App後才能再重新授權你的App");
+                    console.log(`已授權App登入FB 的 userID:${userID}`);
+                    GetProfile();
+                } else if (res.status === 'not_authorized' || res.status === "unknown") {
+                    //App未授權或用戶登出FB網站才讓用戶執行登入動作
+                    FB.login(function (response) {
+
+                        //console.log(response); //debug用
+                        if (response.status === 'connected') {
+                            //user已登入FB
+                            //抓userID
+                            let userID = response["authResponse"]["userID"];
+                            console.log(`已授權App登入FB 的 userID:${userID}`);
+                            GetProfile();
+
+                        } else {
+                            // user FB取消授權
+                            alert("Facebook帳號無法登入");
+                        }
+                        //"public_profile"可省略，仍然可以取得name、userID
+                    }, { scope: 'email' });
+                }
+            });
+        }
+    </script>
+    <script type="text/javascript">
+        //取得用戶姓名、email
+        function GetProfile() {
+            document.getElementById('content').innerHTML = "";//先清空顯示結果
+
+            //FB.api()使用說明：https://developers.facebook.com/docs/javascript/reference/FB.api
+            //取得用戶個資
+            FB.api("/me", "GET", { fields: 'last_name,first_name,name,email' }, function (user) {
+                //user物件的欄位：https://developers.facebook.com/docs/graph-api/reference/user
+                    console.log(response);
+                    userFbInfo = JSON.stringify(user);
+                    console.log(userFbInfo)
+            });
+
+        }
+
+    function checkIfConnected() {
+        $.ajax({
+            type: "POST",
+            url: "/login/",
+            data: userFbInfo,
+            datatype: "json",
+            success: function (data) {
+                console.log('登入回傳資料')
+
+            },
+            // error: function (e) {
+            //     console.log(e)
+            //     alert(e)
+            // }
+        })
+    }
+    </script>
+
+
+
+
+    <!--logout-->
+    <script type="text/javascript">
+
+        //刪除使用者已授權你的FB App，好讓使用者下次重新授權你的FB App
+        //參考：https://stackoverflow.com/questions/6634212/remove-the-application-from-a-user-using-graph-api/7741978#7741978
+        //https://stackoverflow.com/questions/9050190/facebook-api-sdk-revoke-access
+        function Del_FB_App() {
+
+            FB.getLoginStatus(function (response) {//取得目前user是否登入FB網站
+                //debug用
+                console.log(response);
+                if (response.status === 'connected') {
+                    //抓userID
+                    //let userID = response["authResponse"]["userID"];
+
+
+                    FB.api("/me/permissions", "DELETE", function (response) {
+                        console.log("刪除結果");
+                        console.log(response); //gives true on app delete success
+                        //最後一個參數傳遞true避免cache
+                        FB.getLoginStatus(function (res) { }, true);//強制刷新cache避免login status下次誤判
+
+                    });
+
+                } else {
+                    console.log("無法刪除FB App");
+                }
+            });
+
+        }
+    </script>
+</body>
+</html>
