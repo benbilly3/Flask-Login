@@ -108,29 +108,16 @@
             //取得用戶個資
             FB.api("/me", "GET", { fields: 'last_name,first_name,name,email' }, function (user) {
                 //user物件的欄位：https://developers.facebook.com/docs/graph-api/reference/user
+                if (user.error) {
                     console.log(response);
-                    userFbInfo = JSON.stringify(user);
-                    console.log(userFbInfo)
+                } else {
+
+<!--                    document.getElementById('content').innerHTML = JSON.stringify(user);-->
+                    console.log(JSON.stringify(user));
+                }
             });
 
         }
-
-    function checkIfConnected() {
-        $.ajax({
-            type: "POST",
-            url: "/login/",
-            data: userFbInfo,
-            datatype: "json",
-            success: function (data) {
-                console.log('登入回傳資料')
-
-            },
-            // error: function (e) {
-            //     console.log(e)
-            //     alert(e)
-            // }
-        })
-    }
     </script>
 
 
