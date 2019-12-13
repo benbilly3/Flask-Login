@@ -5,12 +5,10 @@ from config import google_client_id,google_client_secret,fb_client_id,fb_client_
 from flask import request,flash,Flask, redirect, url_for, render_template
 from flask_login import login_user,login_required,logout_user
 from flask_dance.contrib.google import make_google_blueprint, google
-from flask_dance.contrib.facebook import make_facebook_blueprint,facebook
 import os
 import json
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = '1'
 os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = '1'
-
 
 ########Normal_Member_Login########
 @app.route('/')
@@ -24,7 +22,6 @@ def welcome_user():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-
     #FB login check db
     if request.method == 'POST':
         email = request.form['email']
@@ -35,7 +32,6 @@ def login():
                 username=email,
                 password='123456'
             )
-
             db.session.add(user)
             db.session.commit()
             user = User.query.filter_by(email=email).first()
@@ -54,9 +50,7 @@ def login():
             next = request.args.get('next')
             if next == None or not next[0] == '/':
                 next = url_for('welcome_user')
-
             return redirect(next)
-
     return render_template('login.html', form=form)
 
 
@@ -103,18 +97,14 @@ def welcome_google():
             username=email,
             password='123456'
         )
-
         db.session.add(user)
         db.session.commit()
         user = User.query.filter_by(email=email).first()
-
     # and log in
     login_user(user)
-
     # If a user was trying to visit a page that requires a login
     # flask saves that URL as 'next'.
     next = request.args.get('next')
-
     # So let's now check if that next exists, otherwise we'll go to
     # the welcome page.
     if next == None or not next[0] == '/':
@@ -144,5 +134,3 @@ def logout():
 
 if __name__ == '__main__':
     app.run(debug=True,host='127.0.0.1', port=8000)
-
-
