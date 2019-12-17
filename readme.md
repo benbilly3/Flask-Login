@@ -3,12 +3,11 @@
 ## Goals
 1. Flask member Login
 1. OAuth Module:Google、FB、weibo(微博)
-2. Admin Module
 
 ## Module
 See requirements.txt
 ### **Focus on Flask Dance:**
-Doing the OAuth dance with style using Flask, requests, and oauthlib.
+Doing the OAuth dance with style using Flask, requests, and Oauthlib.
 
 ## Code Architecture
 1. app.py:Flask view&url
@@ -120,13 +119,14 @@ https://developers.facebook.com/
 
 Use Ngrok url to test Oauth,because FB requests only "https" can be authorizated.
 
+Or use pyOpenSSL module(app.run(ssl_context='adhoc'))
 ## FB JS_SDK 
 https://github.com/singingwolfboy/flask-dance-facebook
 
 The module has some problems to get Authorization connection.
 Change setting methods to use FB SDK in HTML.
 
-code result:
+code resourse:
 
 https://dotblogs.com.tw/shadow/2019/10/12/114017
 
@@ -137,7 +137,7 @@ https://github.com/michaelliao/sinaweibopy/wiki/OAuth2-HOWTO
 ## Log-out
 Clean Every OAuth Token
 
-FB_logout set in JS.
+Set FB_logout in JS.
 ```
 @app.route('/logout')
 @login_required
